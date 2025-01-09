@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: payments_db
+    ports:
+      - "3307:3306"
+    expose:
+      - "3307"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: sritiman
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: ecommerce_payments
+    volumes:
+      - my-db:/var/lib/mysql
+      - ./mysql-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - payments_ecommnet
+volumes:
+  my-db:
+networks:
+  payments_ecommnet:
