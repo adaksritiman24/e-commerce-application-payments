@@ -17,8 +17,27 @@ services:
       - my-db:/var/lib/mysql
       - ./mysql-scripts:/docker-entrypoint-initdb.d
     networks:
-      - payments_ecommnet
+      - ecommnet
+
+  ecommerce-backend-payments-api:
+    image: ecommerce-backend-payments-api:v1
+    container_name: ecommerce-backend-payments-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - MYSQL_DATASOURCE_URL=jdbc:mysql://payments_db:3306/ecommerce_payments
+    volumes:
+      - ~/.gradle:/root/.gradle
+    networks:
+      - ecommnet
+    depends_on:
+      - db
+
 volumes:
   my-db:
 networks:
-  payments_ecommnet:
+  ecommnet:
+    external: true

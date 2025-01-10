@@ -2,7 +2,7 @@ server:
   port: 8081
 spring:
   application:
-    name: payments
+    name: e-commerce-payments
   datasource:
     url: ${MYSQL_DATASOURCE_URL:jdbc:mysql://localhost:3307/ecommerce_payments}
     username: sritiman
