@@ -2,11 +2,15 @@ package com.sritiman.ecommerce.payments.service;
 
 import com.sritiman.ecommerce.payments.exceptions.payments.UnsupportedPaymentModeException;
 import com.sritiman.ecommerce.payments.gateway.BankPaymentGateway;
+import com.sritiman.ecommerce.payments.model.dtos.payments.BankCardDTO;
 import com.sritiman.ecommerce.payments.model.dtos.payments.PaymentAuthorizationRequest;
 import com.sritiman.ecommerce.payments.model.dtos.payments.PaymentModeDTO;
 import com.sritiman.ecommerce.payments.model.dtos.payments.PaymentResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.sritiman.ecommerce.payments.constants.Constants.PAYMENT_FAILURE;
 import static com.sritiman.ecommerce.payments.constants.Constants.PAYMENT_SUCCESS;
@@ -24,6 +28,7 @@ public class PaymentsService implements IPaymentsService {
     @Override
     public PaymentResponseDTO capturePayment(PaymentAuthorizationRequest paymentAuthorizationRequest) {
         if(PaymentModeDTO.BANK_CARD.equals(paymentAuthorizationRequest.getPaymentMode())) {
+            sanitizeCardNumber(paymentAuthorizationRequest);
             String captureStatus = bankPaymentGateway.capture(paymentAuthorizationRequest);
 
             if(captureStatus.equalsIgnoreCase(PAYMENT_SUCCESS)) {
@@ -34,6 +39,15 @@ public class PaymentsService implements IPaymentsService {
             }
         }else {
             throw new UnsupportedPaymentModeException("PaymentMode not Supported");
+        }
+    }
+
+    private void sanitizeCardNumber(PaymentAuthorizationRequest paymentAuthorizationRequest) {
+        String bankCardNumber = Optional.ofNullable(paymentAuthorizationRequest.getBankCard())
+                .map(BankCardDTO::getCardNumber)
+                .orElse(null);
+        if(Objects.nonNull(bankCardNumber)) {
+            paymentAuthorizationRequest.getBankCard().setCardNumber(bankCardNumber.replace(" ",""));
         }
     }
 }
