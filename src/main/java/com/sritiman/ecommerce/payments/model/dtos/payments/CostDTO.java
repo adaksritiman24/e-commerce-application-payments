@@ -14,4 +14,5 @@ public class CostDTO {
     private double subTotal;
     private double totalCost;
     private double shippingCost;
+    private double deductions;
 }

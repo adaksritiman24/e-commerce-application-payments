@@ -32,16 +32,32 @@ public class BankPaymentGateway implements PaymentGateway{
         String customerCardNumber = paymentAuthorizationRequest.getBankCard().getCardNumber();
         String cvv = paymentAuthorizationRequest.getBankCard().getCvv();
 
-        Accounts merchantAccount = accountsRepository.findByAccountNumber(BUZZ_BUSINESS_ACCOUNT_NUMBER).stream().findFirst().orElse(null);
-        Accounts customerAccount = accountsRepository.findByCardNumberAndCvv(customerCardNumber, cvv).stream().findFirst().orElse(null);
+        Accounts merchantAccount = accountsRepository
+                .findByAccountNumber(BUZZ_BUSINESS_ACCOUNT_NUMBER).stream().findFirst().orElse(null);
+        Accounts customerAccount = accountsRepository
+                .findByCardNumberAndCvv(customerCardNumber, cvv).stream().findFirst().orElse(null);
 
-        if(Objects.isNull(merchantAccount)) {
-            throw new AccountNotFoundException(ACCOUNT_NOT_FOUND, "merchant Account");
-        }
+        validateMerchantAccountNotNull(merchantAccount);
+        validateCustomerAccountNotNull(customerAccount);
+        double totalTransferAmount = getTotalTransferAmount(paymentAuthorizationRequest);
+        return handleMerchantCustomerTransaction(merchantAccount, customerAccount, totalTransferAmount);
+    }
+
+    private void validateCustomerAccountNotNull(Accounts customerAccount) {
         if(Objects.isNull(customerAccount)) {
             throw new AccountNotFoundException(ACCOUNT_NOT_FOUND, "customer Account");
         }
-        double totalTransferAmount = paymentAuthorizationRequest.getCost().getTotalCost();
+    }
+
+    private void validateMerchantAccountNotNull(Accounts merchantAccount) {
+        if(Objects.isNull(merchantAccount)) {
+            throw new AccountNotFoundException(ACCOUNT_NOT_FOUND, "merchant Account");
+        }
+    }
+
+    private String handleMerchantCustomerTransaction(Accounts merchantAccount,
+                                                     Accounts customerAccount,
+                                                     double totalTransferAmount) {
         Optional<Accounts> merchantOpt = accountsRepository.findById(merchantAccount.getId());
         Optional<Accounts> customerOpt = accountsRepository.findById(customerAccount.getId());
 
@@ -49,5 +65,10 @@ public class BankPaymentGateway implements PaymentGateway{
             buzzBankingService.doTransaction(customerOpt.get(), merchantOpt.get(), totalTransferAmount);
         }
         return SUCCESS;
+    }
+
+    private double getTotalTransferAmount(PaymentAuthorizationRequest paymentAuthorizationRequest) {
+        double deductions = paymentAuthorizationRequest.getCost().getDeductions();
+        return paymentAuthorizationRequest.getCost().getTotalCost() - deductions;
     }
 }
